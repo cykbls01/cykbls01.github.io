@@ -11,8 +11,8 @@ github_repo: "https://github.com/cykbls01/cykbls01.github.io.git" # you code rep
 
 # Sidebar settings
 sidebar: true                           # whether or not using Sidebar.
-sidebar-about-description: "苟利国家生死以，岂因祸福避趋之~"
-sidebar-avatar: /img/avatar_binggan.jpg      # use absolute URL, seeing it's used in both `/` and `/about/`
+sidebar-about-description: "wx:cykbls01"
+sidebar-avatar: https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSkjcR0MYkwoP0Czfj_2lg4LOfO-UurzDMm7Q&usqp=CAU      # use absolute URL, seeing it's used in both `/` and `/about/`
 
 
 
