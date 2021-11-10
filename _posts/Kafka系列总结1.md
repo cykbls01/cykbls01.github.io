@@ -56,4 +56,5 @@ docker run -d --name kafka-manager --link zookeeper:zookeeper --link kafka:kafka
 --
 
 [docker下安装kafka和kafka-manager](https://www.cnblogs.com/brady-wang/p/13757713.html)
+
 [Docker 安装 kafka 单机版本](https://www.icode9.com/content-4-1040800.html)

@@ -1,0 +1,111 @@
+---
+layout:     post
+title:      Kafka系列总结2
+subtitle:   Kafka使用Demo java实现
+date:       2021-11-10
+author:     Yikun Chen
+header-img: img/kafka/header.png
+catalog: true
+tags:
+    - kafka
+    - java
+    - demo
+
+---
+
+
+# Kafka系列总结2
+
+Kafka使用Demo java实现
+--
+
+主要是介绍一下消费者和生产者的各类api以及配置，由maven进行简单配置。
+
+---
+
+## 生产者实现
+
+生产者的配置以及具体发送代码如下。
+
+```java
+        Properties props = new Properties();//配置参数
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "192.168.2.11:9092");//配置host地址以及ip端口
+
+        props.put(ProducerConfig.ACKS_CONFIG, "1");//消息持久化参数，0表示不需要接受确认发送下一条消息，1表示需要等待leader写入本地log，-1或者all表示min.insync.replicas个副本写入日志成功
+
+        props.put(ProducerConfig.RETRIES_CONFIG, 3);//发送失败的重试次数
+        props.put(ProducerConfig.RETRY_BACKOFF_MS_CONFIG, 300);//发送失败的重试间隔时间
+
+        props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, 33554432);//本地缓冲区，消息可以先在缓冲区积累，然后批量发送
+        props.put(ProducerConfig.BATCH_SIZE_CONFIG, 16384);//缓冲区批量发送的消息大小
+        props.put(ProducerConfig.LINGER_MS_CONFIG, 10);//发送间隔时间，等待10ms，无论缓冲区是否放满，都会发送出去
+
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());//序列化操作
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());//序列化操作
+
+        Producer<String, String> producer = new KafkaProducer<String, String>(props);//创建生产者
+
+        int msgNum = 5;//设置发送的消息线程数
+        final CountDownLatch countDownLatch = new CountDownLatch(msgNum);//等待消息发送完再结束的同步组件
+        for (int i = 1; i <= msgNum; i++) {
+            Order order = new Order(i, 100 + i, 1, 1000.00);
+
+            ProducerRecord<String, String> producerRecord = new ProducerRecord<String, String>("topic", order.getOrderId().toString(), JSON.toJSONString(order));//发送消息，参数指定topic名称，order的key以及序列化的具体内容
+
+            
+            RecordMetadata metadata = producer.send(producerRecord).get();
+            System.out.println("同步方式发送消息结果：" + "topic-" + metadata.topic() + "|partition-"+ metadata.partition() + "|offset-" + metadata.offset());//等待消息发送成功的同步等待
+        }
+
+        countDownLatch.await(5, TimeUnit.SECONDS);//等待生产结束
+        producer.close();//关闭生产者
+```
+
+## 消费者实现
+
+消费者的配置以及具体发送代码如下。
+
+```java
+        Properties props = new Properties();//配置参数
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "192.168.2.11:9092");//配置host地址以及ip端口
+        
+        // 消费分组名
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, "group");//配置消费者所属分组
+        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");//是否自动提交消费，默认是true自动提交，建议改为手动提交
+        
+        //props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"); 如果offset不存在，指定一种消费方式，earliest表示从头消费，latest表示消费启动之后的主题消息
+        
+        props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 1000);//心跳间隔时间
+        props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 10 * 1000);//过了一段时间没有心跳收到，则踢出消费组
+
+        props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 50);//一次最大拉取的消息条数
+        props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, 30 * 1000);//如果poll的间隔时间超出了，则踢出消费组
+
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());//序列化操作
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());//序列化操作
+        
+        KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(props);//创建消费者
+
+        consumer.subscribe(Arrays.asList(TOPIC_NAME));//订阅消息
+
+
+        //consumer.assign(Arrays.asList(new TopicPartition(TOPIC_NAME, 0)));//指定分区消费
+        //consumer.seekToBeginning(Arrays.asList(newTopicPartition(TOPIC_NAME,0)));//回溯消费
+        //consumer.seek(new TopicPartition(TOPIC_NAME, 0), 10);//指定offset消费
+
+
+        while (true) {
+            ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(1000));//拉取消息
+            for (ConsumerRecord<String, String> record : records) {
+                System.out.printf("收到消息：partition = %d,offset = %d, key = %s, value = %s%n", record.partition(),
+                        record.offset(), record.key(), record.value());
+            }
+
+            if (records.count() > 0) {
+                consumer.commitSync();//手动同步提交
+            }
+        }
+```
+
+参考文献
+--
