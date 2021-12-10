@@ -19,7 +19,7 @@ tags:
 Docker环境安装Elasticsearch
 --
 
-Elasticsearch的安装总共分为三个部分，分别是Elasticsearch，以及kibana安装。
+Elasticsearch的安装总共分为两个部分，分别是Elasticsearch，以及kibana安装。
 
 ---
 
