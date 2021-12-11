@@ -1,7 +1,7 @@
 ---
 layout:     post
 title:      Elasticsearch系列总结2
-subtitle:   Elasticsearch基础知识
+subtitle:   Elasticsearch 使用教程
 date:       2021-11-14
 author:     Yikun Chen
 header-img: img/background/header.png
